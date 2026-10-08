@@ -1,0 +1,125 @@
+# Single source of truth for non-Claude model routing. Tab-separated.
+#   model	<id>	<backend>[	<col4>]    — routable model id. 4th field:
+#                                     codex (optional) pins model_reasoning_effort;
+#                                     xai (required) is the xAI API model id
+#                                     the route calls (bin/model-run.sh
+#                                     --xai-models lists them)
+#   retired	<old-id>	<successor>    — rejected with pointer to successor
+#   task	<task-type>	<model-id>[	<effort>] — --task-type resolution; the
+#                                     optional effort (codex only) overrides
+#                                     the model row's pin for that task
+#   ignore	<glob>	<reason>       — a catalog id seen and deliberately NOT
+#                                     routed (shell glob; matched against the
+#                                     bare id and "<backend>:<id>", so
+#                                     "cursor:gpt-*" scopes it to one backend).
+#                                     Silences catalog-drift's `unrouted`
+#                                     finding; reason is mandatory (routecheck).
+#                                     Prefer version-specific globs
+#                                     (claude-opus-4-*) so a NEW version still
+#                                     surfaces instead of being ignored forever.
+# Consumed by bin/model-run.sh (routing + errors), tests/routecheck.sh
+# (test matrix), bin/catalog-drift.sh (live-catalog drift detection) and
+# hooks/route-guard.sh (retired ids). Comments here stay one or two lines:
+# the evidence behind each row lives in model-evidence.md, and the markdown
+# docs must not grow their own id lists (`bash bin/model-run.sh` prints them).
+#
+# OpenAI (Codex). Frontier tiers whose Codex catalog default effort is LOW are
+# pinned to high (override per call with MODEL_RUN_EFFORT).
+model	gpt-6-astra	codex	high
+# gpt-6.1-sol: the workhorse (GA 2026-09-29; supersedes gpt-6-sol). `bulk` runs
+# it at medium (task row below); a direct call gets the high pin.
+model	gpt-6.1-sol	codex	high
+# gpt-6-sol: legacy since 2026-09-30 (superseded by gpt-6.1-sol, same price).
+model	gpt-6-sol	codex
+# gpt-6-luna: the cheap draft/extraction tier (`draft`). When a gpt-6.1-luna
+# appears in `codex debug models`, route it and move `draft` to it.
+model	gpt-6-luna	codex
+# gpt-5.6-*: legacy since 2026-09-22 (superseded by GPT-6 Sol/Luna); terra was
+# the bulk default until 2026-10-07.
+model	gpt-5.6-sol	codex
+model	gpt-5.6-terra	codex
+model	gpt-5.6-luna	codex
+# Cursor.
+model	composer-2.5	cursor
+model	composer-2.5-fast	cursor
+# grok-4.7 is the default grok; its ids have NO "cursor-" prefix, unlike 4.6.
+model	grok-4.7-high	cursor
+model	grok-4.7-high-fast	cursor
+model	grok-4.7-xhigh	cursor
+model	grok-4.7-medium	cursor
+model	grok-4.7-low	cursor
+# grok-4.6: legacy, routable while the Cursor catalog lists it.
+model	cursor-grok-4.6-high	cursor
+model	cursor-grok-4.6-high-fast	cursor
+model	cursor-grok-4.6-xhigh	cursor
+model	cursor-grok-4.6-medium	cursor
+model	cursor-grok-4.6-low	cursor
+model	glm-5.2-high	cursor
+model	glm-5.2-max	cursor
+# xai = the DIRECT xAI Responses API (curl, XAI_API_KEY from env/~/.profile,
+# store:false, web_search + x_search): the only route with REAL X search. The
+# id is ours; column 4 is xAI's model id.
+model	grok-4.7-xsearch	xai	grok-4.7
+# ignore rows (model scout 2026-09-22): catalog ids seen and deliberately not
+# routed. Claude globs are one per family VERSION so the next Claude release
+# still surfaces as unrouted ([lmhx]* = low/medium/high/xhigh/max, so
+# claude-opus-5-[lmhx]* does not swallow a future claude-opus-5-6-*).
+ignore	auto	Cursor's router, not a model (picks its own model per request)
+ignore	cursor:gpt-*	OpenAI models route through Codex (native, seat auth), never cursor-agent
+ignore	cursor:claude-opus-5-5-*	Claude runs natively (Agent tool / claude CLI), never via cursor-agent
+ignore	cursor:claude-opus-5-[lmhx]*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-opus-5-thinking-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-fable-5-1-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-fable-5-[lmhx]*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-fable-5-thinking-*	Claude runs natively, never via cursor-agent
+# claude-sonnet-5-5-{low,medium,high,xhigh,max}: Sonnet 5.5 (2026-09-28), added
+# by the model scout 2026-09-29 — native via the `sonnet` alias from Claude Code 2.1.284.
+ignore	cursor:claude-sonnet-5-5-*	Claude runs natively (Agent tool / claude CLI), never via cursor-agent
+ignore	cursor:claude-sonnet-5-[lmhx]*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-sonnet-5-thinking-*	Claude runs natively, never via cursor-agent
+# claude-haiku-5-5-{low..max} / -thinking-*: Haiku 5.5 (2026-10-07), added by
+# the model scout 2026-10-08 — native via the `haiku` alias from Claude Code 2.1.293.
+ignore	cursor:claude-haiku-5-5-*	Claude runs natively (Agent tool / claude CLI), never via cursor-agent
+ignore	cursor:claude-opus-4-8-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-opus-4-7-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-4.6-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-4.5-*	Claude runs natively, never via cursor-agent
+ignore	cursor:claude-4-sonnet*	Claude runs natively, never via cursor-agent
+ignore	cursor:grok-4.7-[lmx]*-fast	grok-4.7 fast-mode variants (2x price) beyond the routed grok-4.7-high-fast; no separate role
+ignore	cursor:cursor-grok-4.6-[lmx]*-fast	legacy grok-4.6 fast-mode variants; 4.7 is the default grok
+ignore	cursor:cursor-grok-4.5-[lm]*-fast	legacy grok-4.5 fast-mode variants; 4.7 is the default grok
+# Non-routed families in the Cursor catalog, one glob per version (AA
+# Intelligence Index v4.3.2 scores from artificialanalysis.ai model pages,
+# fetched 2026-09-22; a newer version still surfaces as unrouted):
+ignore	cursor:gemini-3.8-flash-*	Gemini 3.8 Flash (2026-09-02): AA v4.3.2 41 at $0.75/$3.75 intro; below grok-4.7 (46) and gpt-6-sol (48), 7x gpt-6-luna's price; no role here
+ignore	cursor:gemini-3.7-flash-*	Gemini 3.7 Flash, superseded by 3.8 Flash (AA v4.3.2 39)
+ignore	cursor:gemini-3.6-flash-*	older Gemini Flash, superseded by 3.8 Flash
+ignore	cursor:gemini-3.5-flash	older Gemini Flash, superseded by 3.8 Flash
+ignore	cursor:gemini-3-flash	older Gemini Flash, superseded by 3.8 Flash
+ignore	cursor:gemini-3.1-pro	Gemini 3.1 Pro (still Google's newest Pro per ai.google.dev pricing, 2026-09-22): a preview, older than every frontier tier routed here
+ignore	cursor:kimi-k3-*	Kimi K3 (2026-07-16): AA v4.3.2 44 at $3/$15, dominated by gpt-6-sol (48 at $2/$10)
+ignore	cursor:kimi-k2.7-*	Kimi K2.7 Code (2026-06-12): AA v4.3.2 26; no role
+ignore	cursor:muse-spark-1.3-*	Meta Muse Spark 1.3 (2026-09-02): AA v4.3.2 48 (max) at $1.60 per index task (AA model page, fetched 2026-09-23), dominated by gpt-6-sol (48 at $1.06); no hallucination rate published
+# retired: rejected by model-run.sh and route-guard (keep RETIRED in
+# hooks/route-guard.sh in sync — routecheck checks it).
+retired	grok-4.5-xhigh	grok-4.7-xhigh
+retired	grok-4.5-fast-xhigh	grok-4.7-high-fast
+# gpt-5.5: hidden from the Codex catalog 2026-10-06 (announced retirement 10-14).
+retired	gpt-5.5	gpt-6.1-sol
+# cursor-grok-4.5-*: retired 2026-10-07 — legacy two versions back, and its
+# -high/-low routes timed out (600 s) in both live routechecks that day.
+retired	cursor-grok-4.5-high	grok-4.7-high
+retired	cursor-grok-4.5-high-fast	grok-4.7-high-fast
+retired	cursor-grok-4.5-medium	grok-4.7-medium
+retired	cursor-grok-4.5-low	grok-4.7-low
+# Task types (model-selection.md has the "when"). 2026-10-07: bulk moved
+# gpt-5.6-terra -> gpt-6.1-sol at medium (AA v4.3.2 48 at $0.21/task vs Terra
+# 42 at $1.40; Terra's Reliability 7 had no measurement behind it), and `draft`
+# added for gpt-6-luna.
+task	bulk	gpt-6.1-sol	medium
+task	cheap	composer-2.5
+task	draft	gpt-6-luna
+task	recency	grok-4.7-high
+task	x-recency	grok-4.7-xsearch
+task	second-review	gpt-6-astra
+task	fable-fallback	gpt-6-astra
