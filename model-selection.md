@@ -30,7 +30,7 @@ Index v4.3.2 score and cost per index task.
 | Model | CE | Int | Taste | Rel | AA @ effort | Role here |
 | ----- | -- | --- | ----- | --- | ----------- | --------- |
 | opus-5.5 | 6* | 10* | 8* | 7* | 54 $1.82 @high · 58 $5.98 @max | `opus`, orchestrator |
-| sonnet-5.5 | 9* | 9* | 7* | 7* | 41 $0.59 @med · 47 $1.08 @high · 56 $7.60 @max | `sonnet`, cheap default |
+| sonnet-5.5 | 9* | 9* | 7* | 7* | 41 $0.48 @med · 47 $0.88 @high · 56 $5.46 @max | `sonnet`, cheap default |
 | fable-5.1 | 2 | 9 | 9* | 6* | 53 $7.63 @max | `fable`, taste |
 | gpt-6-astra | 6 | 9 | 8 | 6 | 53 $3.26 @max | second-review, fallback |
 | gpt-6.1-sol | 10* | 9* | 6* | 5* | 48 $0.21 @med · 50 $0.32 @high | `bulk` |
@@ -58,8 +58,8 @@ Index v4.3.2 score and cost per index task.
    `opus`.
 4. **Never grok or composer as a reviewer. Never Haiku for important work.**
    Treat any model's unsourced version, price or API claim as unverified.
-5. **Effort:** `sonnet` `low`/`medium` (at `max` it costs more per task than
-   opus); `opus`/`fable` `high`, `xhigh` only when truly needed; `low` for
+5. **Effort:** `sonnet` `low`/`medium` (at `max` it costs 3× opus at `high`
+   per task); `opus`/`fable` `high`, `xhigh` only when truly needed; `low` for
    simple wrappers. Codex efforts come from the routing table.
 6. **Prefer task types to raw ids.** The mapping lives in `bin/routes.tsv`,
    not in your judgment. Non-Claude calls go through the `model-runner`
