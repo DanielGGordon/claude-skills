@@ -69,6 +69,13 @@ runs at here (since 2026-10-07; the notes give per-effort numbers).
   runs use Anthropic's default fallback, hit on ~0.1% of tasks (AA article
   2026-09-28). CE stays 9\*. GPT-6.1 Sol Ultrafast shipped as a
   `service_tier` on `gpt-6.1-sol`, not a new id (see the gpt-6.1-sol note).
+- **2026-10-11 scout** (grok x-recency `x_search=10` + Claude WebSearch/WebFetch;
+  catalogs unchanged, no drift, no unrouted ids; the 2026-10-10 run's PR was
+  closed unmerged after a one-off `glm-5.2-max` live failure, which passed
+  in today's pre-run routecheck): no route or score change. The gpt-6.1-sol
+  note now gives Ultrafast's price, **6× Standard** (OpenAI pricing page,
+  fetched 2026-10-11). Still not released: gpt-6.1-luna, gpt-6-cyber,
+  grok-4.8, gemini-4-argon (API).
 - Earlier: Scores are **1–10, higher is better**. Last validated **2026-07-21** against
 Artificial Analysis, Coding Agent Index, LMArena/Design Arena, and vendor pricing
 (two independent research passes: Claude web research + grok-4.5 recent-intel);
@@ -272,7 +279,10 @@ default (`medium`/`high`), so treat the scores as ceilings.
   "available to all API users" (developers.openai.com ultrafast-mode guide,
   fetched 2026-10-09); in Codex only on Pro $500 and eligible Enterprise/Edu
   plans (learn.chatgpt.com/docs/models, fetched 2026-10-09). No catalog id,
-  so nothing to route.
+  so nothing to route. Price is **6× Standard** on every column: Sol
+  Ultrafast $12 / $0.60 cached / $60 output per Mtok ($24 / $1.20 / $90
+  past 272k input); Astra Ultrafast $60 / $6 / $300; no Luna Ultrafast row
+  (developers.openai.com/api/docs/pricing, undated, fetched 2026-10-11).
   - **Intelligence 9\*** — AA Intelligence Index **v4.3.2 52 (max)**, +4 over
     gpt-6-sol (48) and 1 below Astra (53, max); per effort **xhigh 51, high
     50, medium 48, low 42** (v4.3.2, AA per-effort pages) — so the pinned
@@ -313,7 +323,7 @@ default (`medium`/`high`), so treat the scores as ceilings.
     -vs-gpt-6-astra (v4.3.2; undated, fetched 2026-09-30).
   - **UNVERIFIED — do not quote:** OpenAI's DeepSWE v1.1 "matches Astra at
     roughly a fifth of the cost" (launch post not fetchable, snippet only); the
-    Sol Ultrafast tier's speed and price; Cognition's FrontierCode 1.1 and the
+    Sol Ultrafast tier's speed ("up to 8×"); Cognition's FrontierCode 1.1 and the
     Vals Index figures (grok leads, not independently fetched).
 
 - **grok-4.5** — **retired 2026-10-07** (`cursor-grok-4.5-*` → the grok-4.7 equivalents): legacy two versions back, and its `-high`/`-low` routes timed out (600 s) in both live routechecks that day. History: $2/$6 per Mtok (cached input $0.30; 2× rates past 200k prompt),
