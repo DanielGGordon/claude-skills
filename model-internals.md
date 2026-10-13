@@ -85,10 +85,10 @@ raw invocation can be reconstructed *with the user's explicit approval*:
 > **codex-plugin-cc**: evaluated and removed 2026-07-07 — hardcoded per-turn
 > sandbox modes incompatible with nested bwrap here.
 
-## Direct xAI API (grok with X search) — `x-recency`
+## Direct xAI API (grok) — `x-recency` and `recency`
 
 **Wired 2026-09-22.** The only route with **real X (Twitter) search**: grok
-via cursor-agent (`--task-type recency`) has web search only. Use it for
+via cursor-agent (`--task-type recency-cursor`) has web search only. Use it for
 social / X sentiment (see model-selection.md "Recent Information"):
 
 ```bash
@@ -102,14 +102,25 @@ MODEL_RUN_XSEARCH_FROM=2026-09-15 bash ~/dotfiles/claude/bin/model-run.sh grok-4
   [<prompt>], "tools": [{"type": "web_search"}, {"type": "x_search"}],
   "store": false}`. `store: false` means xAI persists no conversation, so a
   test call leaves nothing behind and needs no cleanup.
-  `MODEL_RUN_XSEARCH_FROM` / `MODEL_RUN_XSEARCH_TO` (`YYYY-MM-DD`, inclusive)
-  set `x_search`'s `from_date` / `to_date`.
+  `MODEL_RUN_XSEARCH_FROM` / `MODEL_RUN_XSEARCH_TO` (`YYYY-MM-DD`) set
+  `x_search`'s `from_date` / `to_date`. Per docs.x.ai (2026-10-13) the window
+  is `from_date` 00:00 UTC up to but **not including** `to_date`.
+- **X search is required, not hoped for.** grok picks its own tools, and xAI
+  can't force one server-side tool (`tool_choice: {"type":"x_search"}` → 422;
+  `"required"` is met by `web_search` alone). On 2026-10-13 a mixed-source
+  research prompt ran `x_search=0 web_search=22` for $1.09 and exited 0, with
+  x.com URLs found through web search. So the request carries `instructions`
+  (a system message: call x_search before answering, don't substitute web
+  results for it), and an answer with `x_search=0` exits **76** (DEGRADED;
+  answer still on stdout, plus a `model-run: DEGRADED` stderr line).
+  `MODEL_RUN_XSEARCH_REQUIRE=0` turns both off (routecheck's no-search smoke).
 - **Output:** stdout is the answer, then a `Sources:` list of every cited URL
   (the `url_citation` annotations and the response's `citations`). Stderr gets
   exactly one `model-run: xai-tools x_search=<n> web_search=<n> x_posts=<n>
   cited_urls=<n> status=... cost_usd=<n> store=false` line, from the
   response's `usage.server_side_tool_usage_details` and `cost_in_usd_ticks`.
-  It is printed only when an answer came back, so `x_search>=1` there is
+  It is printed only when an answer came back (exit 0, or 76 when
+  `x_search=0`), so `x_search>=1` there is
   proof X was searched. grok's own claims about which tools it used are not
   proof.
 - **Key:** `XAI_API_KEY`, taken from the environment, or else from what
@@ -148,4 +159,20 @@ MODEL_RUN_XSEARCH_FROM=2026-09-15 bash ~/dotfiles/claude/bin/model-run.sh grok-4
   asks it for a per-run random sum instead.
 - The old Live Search API (`search_parameters`) is dead (HTTP 410). Agent
   Tools on the Responses API are the only search interface.
+- **`recency` moved here 2026-10-13** (`grok-4.7-web`, same API model, tools
+  `web_search` only — model-run.sh adds `x_search` only for an id ending in
+  `-xsearch`). Why: on Cursor, `grok-4.7-high` research prompts timed out.
+  cursor-agent (2026.10.01) loads Claude Code's `~/.claude/skills` — including
+  the synced Anthropic `deep-research` skill — plus `~/.claude` hooks and
+  ancestor `CLAUDE.md`s as "third-party extensibility", always on in the CLI
+  (no flag or config key). Its system prompt says to read a matching skill
+  "IMMEDIATELY", so grok read `deep-research/SKILL.md`, fanned out 3–7 Task
+  subagents, wrote `research_notes/` + `reports/` into the workdir, and ran
+  a synthesis subagent. 15 such runs 2026-09-25..10-13 (7 days, 7 projects):
+  9 never finished (600/900 s timeouts), 6 finished in 633–953 s; every
+  non-hijacked recency call finished (115–532 s). The xAI call is one bounded
+  server-side tool loop: the 2026-10-13 incident prompt took 199 s, 21 web
+  searches, $0.86. `recency-cursor` keeps cursor grok as the scout's fallback
+  (a different backend), and model-run.sh prepends `CURSOR_PREAMBLE` (no
+  skills, no Task subagents) to every cursor prompt.
 

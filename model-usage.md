@@ -21,8 +21,8 @@ bash ~/dotfiles/claude/bin/model-run.sh     # no args: lists every id and task t
 ```
 
 - **Task types** (`bin/routes.tsv` maps each to an id and sometimes an
-  effort): `bulk` · `cheap` · `draft` · `recency` · `x-recency` ·
-  `second-review` · `fable-fallback`. The script announces what it resolved
+  effort): `bulk` · `cheap` · `draft` · `recency` · `recency-cursor` ·
+  `x-recency` · `second-review` · `fable-fallback`. The script announces what it resolved
   on stderr: `model-run: --task-type bulk -> gpt-6.1-sol (effort medium)`.
 - **Prompts always go via a file.** Missing, empty or >128 KiB files exit 64.
   Put big inputs (diffs, logs) in files inside the workdir and reference them
@@ -38,7 +38,8 @@ bash ~/dotfiles/claude/bin/model-run.sh     # no args: lists every id and task t
 | `MODEL_RUN_EFFORT=<low\|medium\|high\|xhigh\|max>` | Codex reasoning effort for this call. Overrides the task row, then the model row (`gpt-6-astra`, `gpt-6.1-sol` pinned `high`; `bulk` runs `medium`). Any other value exits 64; `ultra` is deliberately not wired in. Ignored, with a warning, on cursor/xai. |
 | `MODEL_RUN_TIMEOUT=<secs>` | Default 600. |
 | `MODEL_RUN_EPHEMERAL=1` | **Test calls only** (smokes, routecheck, the scout). Codex persists no session. Real delegations stay persisted. |
-| `MODEL_RUN_XSEARCH_FROM` / `_TO=YYYY-MM-DD` | `x-recency` only: date window for X search. |
+| `MODEL_RUN_XSEARCH_FROM` / `_TO=YYYY-MM-DD` | `x-recency` only: date window for X search (`_TO` is exclusive). |
+| `MODEL_RUN_XSEARCH_REQUIRE=0` | `x-recency` only: don't require X search (no system nudge, no exit 76). Smokes only. |
 
 ### Exit Codes
 
@@ -49,14 +50,20 @@ bash ~/dotfiles/claude/bin/model-run.sh     # no args: lists every id and task t
 | `73` | transport error that persisted after one automatic retry | retry later; don't switch models unasked |
 | `75` | **auth or quota** (incl. Codex "You've hit your usage limit") | **STOP and surface it to the user verbatim. Never substitute a model.** |
 | `124` | timeout | the model-runner retries once at 900 s |
+| `76` | `x-recency` answered with **0 X searches** (web-only; answer still on stdout) | treat as degraded: retry once with an X-first prompt, or use it saying X wasn't searched |
 
-### `x-recency` (grok-4.7 on the direct xAI API, X + web search)
+### `recency` / `x-recency` (grok-4.7 on the direct xAI API)
 
-The only route that reads X. It needs `XAI_API_KEY`, from the environment or
-`~/.profile`. A missing or rejected key exits 75. Proof that X was searched
-is model-run's stderr line `model-run: xai-tools x_search=<n> web_search=<n>
-... cost_usd=<n>`, not grok's own claim. It is pay-per-use: about $0.10–$1.25
-per research question, depending on how many posts it fetches.
+`recency` (grok-4.7-web) gets web search; `x-recency` (grok-4.7-xsearch) gets
+web + X search, the only route that reads X. Both need `XAI_API_KEY`, from
+the environment or `~/.profile`; a missing or rejected key exits 75. Proof of
+what was searched is model-run's stderr line `model-run: xai-tools
+x_search=<n> web_search=<n> ... cost_usd=<n>`, not grok's own claim. Both are
+pay-per-use: about $0.10–$1.25 per research question (a 5-part cited research
+prompt: ~$0.86 and ~3 min on `recency`, 2026-10-13).
+`recency-cursor` (grok-4.7-high on the Cursor seat) is the fallback when
+xAI is down or the key is spent — not a first pick: cursor-agent follows
+Claude's skills into subagent fan-outs on research prompts (model-internals.md).
 
 ## Claude Models (sonnet / opus / fable / haiku)
 

@@ -57,9 +57,13 @@ model	cursor-grok-4.6-low	cursor
 model	glm-5.2-high	cursor
 model	glm-5.2-max	cursor
 # xai = the DIRECT xAI Responses API (curl, XAI_API_KEY from env/~/.profile,
-# store:false, web_search + x_search): the only route with REAL X search. The
-# id is ours; column 4 is xAI's model id.
+# store:false). The id is ours; column 4 is xAI's model id. An id ending in
+# -xsearch gets web_search + x_search (the only route with REAL X search);
+# any other xai id gets web_search only.
 model	grok-4.7-xsearch	xai	grok-4.7
+# grok-4.7-web: `recency` since 2026-10-13 — cursor grok-4.7-high followed
+# Claude's deep-research skill into 10+ min subagent fan-outs (124s, 7 days).
+model	grok-4.7-web	xai	grok-4.7
 # ignore rows (model scout 2026-09-22): catalog ids seen and deliberately not
 # routed. Claude globs are one per family VERSION so the next Claude release
 # still surfaces as unrouted ([lmhx]* = low/medium/high/xhigh/max, so
@@ -119,7 +123,9 @@ retired	cursor-grok-4.5-low	grok-4.7-low
 task	bulk	gpt-6.1-sol	medium
 task	cheap	composer-2.5
 task	draft	gpt-6-luna
-task	recency	grok-4.7-high
+task	recency	grok-4.7-web
+# recency-cursor: the scout's X-pass fallback must not share x-recency's backend.
+task	recency-cursor	grok-4.7-high
 task	x-recency	grok-4.7-xsearch
 task	second-review	gpt-6-astra
 task	fable-fallback	gpt-6-astra

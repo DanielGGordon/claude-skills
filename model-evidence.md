@@ -134,7 +134,8 @@ default (`medium`/`high`), so treat the scores as ceilings.
 ## Per-Model Notes
 
 - **grok-4.7** is the grok row that matters now: it is the **default grok**
-  (`--task-type recency` → `grok-4.7-high`; routed 2026-09-22 as
+  (`--task-type recency` → `grok-4.7-web` on the xAI API since 2026-10-13,
+  `recency-cursor` → `grok-4.7-high`; routed 2026-09-22 as
   `grok-4.7-{high,high-fast,xhigh,medium,low}` — note these ids have **no
   `cursor-` prefix** in the Cursor catalog, unlike 4.6/4.5). Released
   2026-09-21 at $2/$6 per Mtok (cached $0.50; Fast $4/$12 at 2× output speed;
@@ -735,10 +736,15 @@ Two grok routes, split by **whether you need X**:
   pricing pages, fetched 2026-09-22). Two test sentiment questions on
   2026-09-22 cost $0.10 and $0.14 each (the response's own `cost_in_usd_ticks`). Needs `XAI_API_KEY` (env or `~/.profile`); a rejected key
   is exit 75, like any auth failure.
-- **`--task-type recency` → `grok-4.7-high` (Cursor): general recent info.**
-  Breaking news, "what happened this week" research, and cross-checking
-  another agent's claims about recent releases, on the already-paid Cursor
-  seat, **web search only**. Note the id has **no `cursor-` prefix**, unlike
+- **`--task-type recency` → `grok-4.7-web` (direct xAI API, web search
+  only; was `grok-4.7-high` on Cursor until 2026-10-13): general recent
+  info.** Breaking news, "what happened this week" research, and
+  cross-checking another agent's claims about recent releases. Moved off the
+  already-paid Cursor seat because cursor-agent followed Claude's
+  deep-research skill into 10–16 min subagent fan-outs on research prompts
+  (15 runs, 9 never finished; model-internals.md); the API run of the same
+  prompt took 199 s and $0.86. `--task-type recency-cursor` keeps
+  `grok-4.7-high` on Cursor as the fallback. Note the id has **no `cursor-` prefix**, unlike
   the legacy 4.6 ids. `cursor-grok-4.6-*` remains routable as legacy if you
   need to reproduce an earlier result (`cursor-grok-4.5-*` retired
   2026-10-07).

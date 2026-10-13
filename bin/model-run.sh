@@ -24,19 +24,30 @@
 # Claude models (sonnet/opus/haiku/fable) are NOT served here — use the Agent
 # tool's `model` param (see ~/.claude/model-usage.md).
 #
-# Backend `xai` (e.g. grok-4.7-xsearch, --task-type x-recency) is the DIRECT xAI
-# Responses API over curl — the only route with REAL X (Twitter) search: grok
-# via cursor-agent has web search only. Request: the routes.tsv 4th column as
-# the API model, tools web_search + x_search, `store: false` (xAI keeps no
-# conversation). Stdout = the answer + a Sources list (every cited URL); stderr
-# gets ONE line `model-run: xai-tools x_search=<n> web_search=<n> ...` (from the
-# response's usage) so callers can prove X was actually searched. Key:
+# Backend `xai` (grok-4.7-xsearch / --task-type x-recency, grok-4.7-web /
+# --task-type recency) is the DIRECT xAI Responses API over curl. Request: the
+# routes.tsv 4th column as the API model, tools x_search + web_search (an id
+# ending in -xsearch: the only route with REAL X search) or web_search alone
+# (any other xai id), `store: false` (xAI keeps no conversation). One bounded
+# server-side tool loop: no skills, subagents or files (cursor-agent grok has
+# all three and timed out on research prompts — model-internals.md). A
+# -xsearch request also carries `instructions` (a system message) requiring
+# x_search — grok picks its own tools, and without it a mixed-source question
+# can be answered from web_search alone (2026-10-13: x_search=0,
+# web_search=22, $1.09, x.com URLs found via web search). Stdout = the answer +
+# a Sources list (every cited URL); stderr gets ONE line `model-run: xai-tools
+# x_search=<n> web_search=<n> ...` (from the response's usage) so callers can
+# prove X was actually searched. A -xsearch answer with x_search=0 is still
+# printed, but exits 76 (DEGRADED: web-only) instead of 0.
+# MODEL_RUN_XSEARCH_REQUIRE=0 drops both the instructions and the 76
+# (routecheck's no-search smoke). Key:
 # XAI_API_KEY from the env, else extracted from ~/.profile exactly the way the
 # cron line gets it (`. ~/.profile`) — never printed, never put in argv.
 # Missing/rejected key, 402/429 credits/rate limit -> 75; 5xx/network
 # (including a connect that never completes) -> one retry, then 73; a response
 # that doesn't arrive within the timeout -> 124. xai-only env: MODEL_RUN_XSEARCH_FROM /
-# MODEL_RUN_XSEARCH_TO=<YYYY-MM-DD> set x_search's from_date / to_date.
+# MODEL_RUN_XSEARCH_TO=<YYYY-MM-DD> set x_search's from_date / to_date (xAI:
+# from_date inclusive, to_date EXCLUSIVE — pass tomorrow to include today).
 #   bash model-run.sh --xai-models   # zero-token xAI catalog read (GET /v1/models;
 #                                    # catalog-drift.sh uses it). Exit 69 = no key;
 #                                    # 75 = key rejected / out of credits; 73 = a
@@ -134,12 +145,17 @@ PROMPTFILE="${1:-}"; WORKDIR="${2:-$PWD}"
 [ -n "$MODEL" ] && [ -n "$PROMPTFILE" ] || usage
 [ -s "$PROMPTFILE" ] || { echo "model-run: prompt file missing or empty: $PROMPTFILE (always pass prompts via file, never inline)" >&2; exit 64; }
 [ -d "$WORKDIR" ] || { echo "model-run: workdir does not exist: $WORKDIR" >&2; exit 64; }
+# Absolute: run_cursor reads the prompt AFTER cd-ing into the workdir, so a
+# relative path became an empty prompt there (2026-10-13: with the caller's
+# stdin open, cursor-agent then waited on stdin until the timeout).
+PROMPTFILE=$(realpath -- "$PROMPTFILE")
 # Both backends get the prompt as ONE argv string, and Linux caps a single
 # argument at 128 KiB (MAX_ARG_STRLEN): a bigger prompt dies in execve (E2BIG,
 # exit 126) with no useful message — e.g. a big diff pasted inline into a
 # second-review prompt (2026-09-22). Reference large inputs by path instead.
+# (130500, not 131072: cursor prepends CURSOR_PREAMBLE to the same argument.)
 PROMPT_BYTES=$(wc -c <"$PROMPTFILE")
-[ "$PROMPT_BYTES" -lt 131000 ] || { echo "model-run: prompt file is $PROMPT_BYTES bytes — over the 128 KiB single-argument limit. Put large inputs (diffs, logs) in files inside the workdir and reference them by relative path in the prompt." >&2; exit 64; }
+[ "$PROMPT_BYTES" -lt 130500 ] || { echo "model-run: prompt file is $PROMPT_BYTES bytes — over the 128 KiB single-argument limit. Put large inputs (diffs, logs) in files inside the workdir and reference them by relative path in the prompt." >&2; exit 64; }
 TIMEOUT="${MODEL_RUN_TIMEOUT:-600}"
 
 case "$MODEL" in
@@ -192,9 +208,19 @@ run_codex() {
   timeout "$TIMEOUT" codex exec --dangerously-bypass-approvals-and-sandbox \
     -C "$WORKDIR" "${args[@]}" "$(cat "$PROMPTFILE")" </dev/null 2>&1
 }
+# cursor-agent loads Claude Code's ~/.claude/skills (and hooks, CLAUDE.md) as
+# "third-party" extensions, with no CLI switch to turn that off (2026.10.01).
+# On any research-shaped prompt grok-4.7 then followed the synced deep-research
+# skill: Task-subagent fan-out, research_notes/ + reports/ in the workdir, and
+# 633-953 s to finish when it finished at all (15 runs, 2026-09-25..10-13;
+# model-internals.md). This preamble keeps it to one session. </dev/null: as
+# for codex — never block on an inherited stdin.
+CURSOR_PREAMBLE='[model-run: work in this one session. Do not read or follow any SKILL.md / agent skill and do not launch subagents (the Task tool): do the work yourself, then give the complete answer as your final message.]'
 run_cursor() {
   (cd "$WORKDIR" && timeout "$TIMEOUT" cursor-agent --print --trust --force \
-    --output-format text --model "$MODEL" "$(cat "$PROMPTFILE")" 2>&1)
+    --output-format text --model "$MODEL" "$CURSOR_PREAMBLE
+
+$(cat "$PROMPTFILE")" </dev/null 2>&1)
 }
 
 # Direct xAI Responses API (see header). Owns its whole exit contract — HTTP
@@ -211,16 +237,40 @@ run_xai() {
   fi
   XT=$(mktemp -d /tmp/model-run-xai.XXXXXX) || return 73
   trap 'rm -rf "$XT"' EXIT
-  python3 - "$PROMPTFILE" "$API_MODEL" "${MODEL_RUN_XSEARCH_FROM:-}" "${MODEL_RUN_XSEARCH_TO:-}" >"$XT/req.json" <<'PY' || { echo "model-run: could not build the xAI request" >&2; return 64; }
+  local xs=0
+  case "$MODEL" in *-xsearch) xs=1 ;; esac
+  if [ "$xs" = 0 ] && [ -n "${MODEL_RUN_XSEARCH_FROM:-}${MODEL_RUN_XSEARCH_TO:-}" ]; then
+    echo "model-run: MODEL_RUN_XSEARCH_FROM/TO ignored — $MODEL is web search only (X search: grok-4.7-xsearch / --task-type x-recency)" >&2
+  fi
+  local req_x="${MODEL_RUN_XSEARCH_REQUIRE:-1}"
+  [ "$req_x" = 0 ] || [ "$req_x" = 1 ] || { echo "model-run: MODEL_RUN_XSEARCH_REQUIRE must be 0 or 1 (got '$req_x')" >&2; return 64; }
+  [ "$xs" = 1 ] || req_x=0
+  python3 - "$PROMPTFILE" "$API_MODEL" "${MODEL_RUN_XSEARCH_FROM:-}" "${MODEL_RUN_XSEARCH_TO:-}" "$xs" "$req_x" >"$XT/req.json" <<'PY' || { echo "model-run: could not build the xAI request" >&2; return 64; }
 import json, sys
-pf, model, frm, to = sys.argv[1:5]
-x = {"type": "x_search"}
-if frm: x["from_date"] = frm
-if to: x["to_date"] = to
-print(json.dumps({"model": model,
-                  "input": [{"role": "user", "content": open(pf, encoding="utf-8", errors="replace").read()}],
-                  "tools": [{"type": "web_search"}, x],
-                  "store": False}))
+pf, model, frm, to, xs, req_x = sys.argv[1:7]
+tools = [{"type": "web_search"}]
+if xs == "1":
+    x = {"type": "x_search"}
+    if frm: x["from_date"] = frm
+    if to: x["to_date"] = to
+    tools.insert(0, x)
+req = {"model": model,
+       "input": [{"role": "user", "content": open(pf, encoding="utf-8", errors="replace").read()}],
+       "tools": tools,
+       "store": False}
+# grok chooses its own tools and xAI can't force one server-side tool
+# (tool_choice {"type":"x_search"} -> 422; "required" is satisfied by
+# web_search alone), so the requirement is stated as a system message.
+if req_x == "1":
+    req["instructions"] = (
+        "This request is routed to you specifically for live X (Twitter) search. "
+        "You MUST call x_search before answering, at least once, and use it for "
+        "every part of the question about what people, users, developers or "
+        "companies are saying, reporting or reacting to. Do not substitute "
+        "web_search results (including x.com links found via web search) for "
+        "x_search. Use web_search for official pages, docs, prices and benchmarks. "
+        "Cite X posts by their x.com status URL.")
+print(json.dumps(req))
 PY
   local attempt=1 body
   while :; do
@@ -261,7 +311,7 @@ PY
   esac
   # Answer text + every cited URL (inline url_citation annotations and the
   # root `citations` list) on stdout; tool-call counts on stderr.
-  python3 - "$XT/resp.json" <<'PY'
+  python3 - "$XT/resp.json" "$req_x" <<'PY'
 import json, sys
 try:
     d = json.load(open(sys.argv[1]))
@@ -301,6 +351,14 @@ print(text)
 if urls:
     print("\nSources:")
     for u in urls: print(f"- {u}")
+# The route exists to read X: a web-only answer is DEGRADED, not success.
+# The answer stays on stdout (it is paid for); the exit code says what it is.
+if sys.argv[2] == "1" and xs == 0:
+    print(f"model-run: DEGRADED on xai — 0 x_search calls (web_search={ws}): X was NOT "
+          "searched; any x.com URLs in the answer came from web search. Exit 76. Retry "
+          "once with an X-first prompt, or use the answer knowing X was not searched.",
+          file=sys.stderr)
+    sys.exit(76)
 PY
 }
 if [ "$BACKEND" = xai ]; then
