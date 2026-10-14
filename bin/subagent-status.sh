@@ -3,9 +3,9 @@
 # for the babysitting heartbeat (CLAUDE.md "Babysitting delegated work").
 #
 #   subagent-status.sh              print the report now
-#   subagent-status.sh --wait 300   the heartbeat: run with Bash
+#   subagent-status.sh --wait 600   the heartbeat: run with Bash
 #                                   run_in_background:true. Polls every 30s and
-#                                   exits after 300s — or EARLY, as soon as no
+#                                   exits after 600s — or EARLY, as soon as no
 #                                   work is live for two polls in a row — then
 #                                   prints the report. Its exit wakes the main
 #                                   agent.
@@ -37,7 +37,7 @@ set -u
 WAIT=0; POLL=30; SID="${CLAUDE_CODE_SESSION_ID:-}"; STALE_MIN=10
 while [ $# -gt 0 ]; do
   case "$1" in
-    --wait) WAIT="${2:-300}"; shift 2 ;;
+    --wait) WAIT="${2:-600}"; shift 2 ;;
     --poll) POLL="${2:-30}"; shift 2 ;;
     --session) SID="${2:-}"; shift 2 ;;
     --stale-min) STALE_MIN="${2:-10}"; shift 2 ;;

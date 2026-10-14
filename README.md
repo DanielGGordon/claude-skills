@@ -17,7 +17,7 @@ requests here would be overwritten. Open an issue instead.
 | `model-evidence.md` | Sources and reasoning behind every score |
 | `model-internals.md` | Backend mechanics and how to change a route |
 | `bin/routes.tsv`, `bin/model-run.sh` | The route table and the runner every non-Claude call goes through |
-| `hooks/subagent-heartbeat-nudge.sh`, `bin/subagent-status.sh`, `tests/heartbeat.sh` | Subagent babysitting: a self-stopping 5-minute heartbeat for background subagents and workflows (see below) |
+| `hooks/subagent-heartbeat-nudge.sh`, `bin/subagent-status.sh`, `tests/heartbeat.sh` | Subagent babysitting: a self-stopping 10-minute heartbeat for background subagents and workflows (see below) |
 | `CODING_AGENTS.md`, `plan-requirements.md` | Conventions given to coding agents and the bar a plan must meet |
 
 Paths inside these files (`~/.claude/…`, `~/dotfiles/claude/…`) refer to the
@@ -31,12 +31,12 @@ min" with `/loop` or a cron keeps pinging long after the work is done. This
 replaces that with a heartbeat that stops itself:
 
 - After any background `Agent` / `Workflow` launch, a PostToolUse hook tells
-  the agent to start `bin/subagent-status.sh --wait 300` as a background Bash
+  the agent to start `bin/subagent-status.sh --wait 600` as a background Bash
   command, and lists the rules: report 2–4 lines on every wake, restart a dead
   or stuck subagent once, re-arm only on `VERDICT: RE-ARM`.
 - The script reads the session's subagent and workflow transcripts under
   `~/.claude/projects/` and reports each agent's current tool, how long it has
-  been quiet, and `STALE` flags. It wakes the agent after 5 min, or about 1 min
+  been quiet, and `STALE` flags. It wakes the agent after 10 min, or about 1 min
   after everything finishes, and the last line is a script-decided
   `VERDICT: RE-ARM` or `VERDICT: STOP`. Stuck or killed work never keeps it
   going.

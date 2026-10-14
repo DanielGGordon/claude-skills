@@ -76,6 +76,16 @@ runs at here (since 2026-10-07; the notes give per-effort numbers).
   note now gives Ultrafast's price, **6× Standard** (OpenAI pricing page,
   fetched 2026-10-11). Still not released: gpt-6.1-luna, gpt-6-cyber,
   grok-4.8, gemini-4-argon (API).
+- **2026-10-14 scout** (grok x-recency `x_search=12` + Claude WebSearch/WebFetch;
+  Cursor listed `gemini-4-argon-{low,medium,high}` as unrouted): **gemini-4-argon
+  routed** (Google, GA 2026-10-13) and **`second-review` moved gpt-6-astra →
+  `gemini-4-argon-high`**: AA-Omniscience hallucination **15% vs 51%** at the
+  same AA v4.3.2 index (53, Argon high / Astra max) and ~60% of Astra's cost per
+  index task at the intro price (see its note and Reviews & Planning). Astra
+  keeps `fable-fallback` and the by-id computer-use / 3D / terminal roles.
+  The Gemini 3.1 Pro ignore row's reason now names Argon as its successor.
+  Live routecheck 2026-10-14: **ALL ROUTES OK**, all three Argon ids included
+  (cursor-agent 2026.10.14-0f9edde, a new build with no changelog entry yet).
 - Earlier: Scores are **1–10, higher is better**. Last validated **2026-07-21** against
 Artificial Analysis, Coding Agent Index, LMArena/Design Arena, and vendor pricing
 (two independent research passes: Claude web research + grok-4.5 recent-intel);
@@ -160,6 +170,46 @@ default (`medium`/`high`), so treat the scores as ceilings.
   (`--task-type x-recency`, 2026-09-22), the only route with real X search;
   the scores above apply to both routes.
 
+
+- **gemini-4-argon** (Google Gemini 4 Argon; announced 2026-09-30 to Fairwind
+  cyber partners only, **GA 2026-10-13** as `gemini-4-argon` — Gemini API
+  changelog, fetched 2026-10-14). Routed here 2026-10-14 through Cursor as
+  `gemini-4-argon-{high,medium,low}` (Cursor's effort ids; Cursor's docs list
+  high / medium (default) / low / minimal, and the CLI catalog has no minimal
+  id). API price **$2 / $0.10 cached / $10 per Mtok through 2026-11-30, then
+  $4 / $0.20 / $20** (output includes thinking; implicit caching only; not on
+  the free tier — ai.google.dev pricing, fetched 2026-10-14); 1M context (AA
+  model page).
+  - **Intelligence 9\*** — AA Intelligence Index **v4.3.2 53 (high, the highest
+    effort AA runs)**, equal to gpt-6-astra (max) 53 (AA model page +
+    argon-vs-astra comparison page, fetched 2026-10-14; AA article
+    2026-09-30). Terminal-Bench 4 **57%** vs Astra 59% (same AA article).
+    Vals Index **68.90%, #1 of 48** at reasoning effort high
+    (vals.ai model page, fetched 2026-10-14; the page's update text says
+    "#1 of 41", so the rank is loose). Provisional: one day of GA.
+  - **Cost Efficiency 7\*** — **$1.99 per AA index task (high) at the intro
+    price**, rising to **$3.98** after 2026-11-30 (AA article) — level with
+    gpt-5.6-sol (CE 7) now and above Astra's $3.26 (CE 6) after the promo, so
+    re-score it on 2026-12-01. It is verbose: **62k output tokens per index
+    task vs Astra's 27k** (comparison page). Cursor bills it at the same
+    $2/$10 (@cursor_ai, 2026-10-13, via grok; cursor.com's model page printed no rate).
+  - **Reliability 6\*** — AA-Omniscience **hallucination 15%, accuracy 50%,
+    Index 42 (high)**: "the lowest of any model scoring 45+ on the
+    Intelligence Index" (AA article 2026-09-30; AA's 2026-10-13 GA post
+    repeats it). Astra (max) is 51% / 63% / 43. The low rate comes partly
+    from abstaining: it answers fewer questions right than Astra or Opus 5.5
+    (66%), which is the right failure mode for a reviewer. Held at Astra's 6,
+    not raised to the unsupervised bar: no honesty-under-pressure,
+    instruction-adherence or harness track record yet, and this is one
+    benchmark from one lab. A live smoke through `cursor-agent` returned a
+    correct, well-formed review in 12 s (2026-10-14).
+  - **Taste —** unmeasured: no Design Arena or LMArena WebDev entry found
+    (searched 2026-10-14). Don't route taste work to it on this table.
+  - **UNVERIFIED — do not quote:** CursorBench 52.8% "on par with Opus 5.5"
+    (@cursor_ai 2026-10-13, via grok; version unpublished); Google's own
+    DeepSWE v1.1 77.9% / AutomationBench 51.3% (blog.google 2026-09-30, vendor
+    table not fetched as data); practitioner reports of wrong codebase
+    conclusions and broken 3D topology (X, 2026-10-14).
 
 - **gpt-6-astra** (OpenAI GPT-6 "Astra", GA 2026-09-03; the only GPT-6 tier
   until Sol and Luna joined it on 2026-09-22 — still no Terra/mini/nano) — $10/$50 per Mtok, cached input $1,
@@ -696,9 +746,15 @@ and measurably worse than Sol on presentation.
 recalled facts (API semantics, versions, prices): Fable 5.1 is Reliability 6\*
 on a 72.6% hallucination rate, Opus 5.5 7\* on 59% (AA-printed since
 2026-09-28). For higher
-confidence add a non-Claude second opinion: **gpt-6-astra**
-(`--task-type second-review`) is now the default there,
-having replaced gpt-5.6-sol on 2026-09-18 — same reviewer role, half the
+confidence add a non-Claude second opinion: **gemini-4-argon-high**
+(`--task-type second-review`) is the default there since 2026-10-14. The
+seat goes to the non-Claude model with the lowest measured hallucination
+rate among Intelligence ≥ 9, and Argon's AA-Omniscience rate is **15% vs
+Astra's 51%** at the same AA v4.3.2 index (53; Argon high, Astra max), at
+$1.99 vs $3.26 per index task while the intro price lasts (gemini-4-argon
+note). It gets there partly by abstaining (accuracy 50% vs 63%), which is
+the failure mode a reviewer should have. Before that, **gpt-6-astra** held
+the seat, having replaced gpt-5.6-sol on 2026-09-18 — same reviewer role, half the
 hallucination rate (AA-Omniscience 51% vs Sol's 92%), higher intelligence, and
 no METR eval-gaming finding against it. It stays there after 2026-09-22:
 gpt-6-sol is cheaper but well below Astra on AA-Omniscience (Index 27 vs
@@ -713,8 +769,9 @@ want a third voice or a cheaper pass. Ask any of them for
 severity, file:line, a concrete failing scenario, and a SHIP / FIX-FIRST
 verdict. **Never grok (any version) or composer-2.5 as review models** — reviews
 need low hallucination and strong reasoning, exactly where they trade down.
-Judge the findings, not the reviewer's confidence: Astra's hallucination rate is
-better than Sol's, not low.
+Judge the findings, not the reviewer's confidence: Argon's rate is one
+benchmark on its first day of GA, and Astra's 51% is better than Sol's, not low.
+`gpt-6-astra` stays routable by id as the second voice.
 
 ### Recent Information / Research
 
@@ -824,14 +881,14 @@ budget. If a route fails, fix the id/syntax or remove the model — never leave
 a documented route broken. Models with no runnable route on this machine get
 no table rows (Claude models are routed natively and are the exception).
 
-Catalog drift — a newer grok/composer/glm/gpt version, a routed id
+Catalog drift — a newer grok/composer/glm/gemini/gpt version, a routed id
 disappearing, or an **unrouted** id no `model` / `retired` / `ignore` row
 accounts for — is detected by `bin/catalog-drift.sh` (live in routecheck, from
 a 24 h cache in the SessionStart hook). The **daily model scout**
 (`bin/model-scout.sh`, cron 11:30 UTC) turns that into a change: grok research
 with live X + web search, independent WebSearch confirmation of every claim it
 writes, table/notes/routes updates under this file's evidence rules, a live
-routecheck and a gpt-6-astra second review, then a PR it merges itself when
+routecheck and a `second-review` pass, then a PR it merges itself when
 every gate passes (data-only diff, live routecheck green on the merged tree;
 code changes wait for Dan). Models it has judged — including not-routable and
 watch items — are logged in `scout/evaluated.tsv`. When a benchmark or price

@@ -40,7 +40,7 @@ script = os.environ.get("STATUS_SCRIPT", "")
 home = os.path.expanduser("~")
 if script.startswith(home + "/"):
     script = "~" + script[len(home):]
-HEARTBEAT = f"bash {script} --wait 300"
+HEARTBEAT = f"bash {script} --wait 600"
 
 if p.get("hook_event_name") == "PreToolUse" or tool in ("CronCreate", "ScheduleWakeup"):
     if tool not in ("CronCreate", "ScheduleWakeup"):
@@ -80,7 +80,7 @@ print(json.dumps({"hookSpecificOutput": {
     "additionalContext": (
         "Background work launched and no heartbeat is armed for this session. Babysit it: "
         f"(1) now run Bash with run_in_background:true: `{HEARTBEAT}` (one at a time; never a cron/ScheduleWakeup/loop). "
-        "It wakes you after 5 min, or ~1 min after all work finishes, with a status report. "
+        "It wakes you after 10 min, or ~1 min after all work finishes, with a status report. "
         "(2) On each wake also check task_status for any T3 delegate_task ids. "
         "(3) An errored or STALE subagent: TaskStop it and relaunch once with the same prompt; a STALE workflow: stop it "
         "and resume with resumeFromRunId; never retry an auth/quota failure (model-run.sh exit 75); a second failure: tell the user. "

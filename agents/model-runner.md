@@ -1,6 +1,6 @@
 ---
 name: model-runner
-description: Deterministic wrapper that runs a prompt on a non-Claude model (OpenAI via Codex, Cursor's composer/grok/glm, grok on the direct xAI API) via model-run.sh and returns the output verbatim. Give it a task type (bulk, cheap, draft, recency, recency-cursor, x-recency, second-review, fable-fallback) or any model id in bin/routes.tsv (`bash ~/dotfiles/claude/bin/model-run.sh` with no args lists them). Use this agent for ALL delegations to non-Claude models — never hand-roll codex/cursor-agent commands.
+description: Deterministic wrapper that runs a prompt on a non-Claude model (OpenAI via Codex, Cursor's composer/grok/glm/gemini, grok on the direct xAI API) via model-run.sh and returns the output verbatim. Give it a task type (bulk, cheap, draft, recency, recency-cursor, x-recency, second-review, fable-fallback) or any model id in bin/routes.tsv (`bash ~/dotfiles/claude/bin/model-run.sh` with no args lists them). Use this agent for ALL delegations to non-Claude models — never hand-roll codex/cursor-agent commands.
 tools: Bash, Write
 model: sonnet
 ---

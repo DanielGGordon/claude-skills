@@ -15,7 +15,7 @@ It is the whole decision; how to invoke a non-Claude pick is in
 | Fast multi-file edits, Cursor-shaped | `--task-type cheap` → composer-2.5 | — | judge it; not terminal-heavy |
 | Hard problems, orchestration, reviews & planning | **`opus`** (Opus 5.5) | `high` | — |
 | Prose, copy, decks, product judgment, UI polish | **`fable`** (Fable 5.1) or `opus` | `high` | judge a Fable *subagent* |
-| Non-Claude second opinion on a review / PR | `--task-type second-review` → gpt-6-astra | high (pin) | judge the findings |
+| Non-Claude second opinion on a review / PR | `--task-type second-review` → gemini-4-argon-high | high (id) | judge the findings |
 | Computer use / GUI agents, 3D/CAD/scenes, long terminal agents, hard science | gpt-6-astra (by id) | start `low`/`medium` | judge it |
 | Recent info (web) | Claude WebSearch, or `--task-type recency` → grok-4.7-web (xAI API, pay-per-use) | — | require dated citations |
 | X / social sentiment | `--task-type x-recency` → grok-4.7-xsearch (pay-per-use) | — | posts are leads, not sources |
@@ -32,7 +32,8 @@ Index v4.3.2 score and cost per index task.
 | opus-5.5 | 6* | 10* | 8* | 7* | 54 $1.82 @high · 58 $5.98 @max | `opus`, orchestrator |
 | sonnet-5.5 | 9* | 9* | 7* | 7* | 41 $0.48 @med · 47 $0.88 @high · 56 $5.46 @max | `sonnet`, cheap default |
 | fable-5.1 | 2 | 9 | 9* | 6* | 53 $7.63 @max | `fable`, taste |
-| gpt-6-astra | 6 | 9 | 8 | 6 | 53 $3.26 @max | second-review, fallback |
+| gemini-4-argon | 7* | 9* | — | 6* | 53 $1.99 @high (intro) | second-review |
+| gpt-6-astra | 6 | 9 | 8 | 6 | 53 $3.26 @max | fable-fallback |
 | gpt-6.1-sol | 10* | 9* | 6* | 5* | 48 $0.21 @med · 50 $0.32 @high | `bulk` |
 | gpt-6-luna | 10* | 5* | 4* | 3* | 38 $0.07 @max | `draft` |
 | haiku-5.5 | 10* | 6* | 5* | 5* | 38 $0.08 @high · 43 $0.21 @max | `haiku` |
@@ -75,4 +76,4 @@ models and updates `bin/routes.tsv`, this card and `model-evidence.md`. It
 live-tests every route and merges its own PR once its gates pass.
 `bash ~/dotfiles/claude/tests/routecheck.sh` verifies every route and keeps
 this file under 8 KB. Watching: **gpt-6.1-luna** (`draft` moves to it the
-day Codex lists it), grok-4.8, gemini-4-argon.
+day Codex lists it), grok-4.8.

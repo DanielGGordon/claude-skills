@@ -89,14 +89,14 @@ out=$(run); expect "workflow killed hours ago -> ignored, STOP" "$out" "VERDICT:
 
 # --- --wait: stops early instead of pinging about finished work ---
 session; agent a1 1 "$END_TURN"
-start=$(date +%s); out=$(run --wait 300 --poll 1); took=$(( $(date +%s) - start ))
-if [ "$took" -le 10 ]; then ok "--wait with nothing live exits early (${took}s, not 300s)"; else bad "--wait early exit" "took ${took}s"; fi
+start=$(date +%s); out=$(run --wait 600 --poll 1); took=$(( $(date +%s) - start ))
+if [ "$took" -le 10 ]; then ok "--wait with nothing live exits early (${took}s, not 600s)"; else bad "--wait early exit" "took ${took}s"; fi
 expect "early exit prints STOP" "$out" "VERDICT: STOP"
 [ ! -e "$HOME/.claude/heartbeat/$SID.pid" ] && ok "pidfile removed after exit" || bad "pidfile removed" "$(ls "$HOME/.claude/heartbeat")"
 
 session; agent a1 0 "$(in_tool Bash 'run tests' 120000)"
 ( sleep 3; printf '%s\n' "$END_TURN" >> "$S/subagents/agent-a1.jsonl" ) &
-start=$(date +%s); out=$(run --wait 300 --poll 1); took=$(( $(date +%s) - start ))
+start=$(date +%s); out=$(run --wait 600 --poll 1); took=$(( $(date +%s) - start ))
 if [ "$took" -ge 3 ] && [ "$took" -le 15 ]; then ok "--wait returns soon after the work finishes (${took}s)"; else bad "--wait finish detection" "took ${took}s"; fi
 expect "finish-triggered exit says STOP" "$out" "VERDICT: STOP — all delegated work is finished"
 
@@ -109,11 +109,11 @@ wait
 # --- hook: nudge ---
 hook() { bash "$HOOK" <<<"$1"; }
 out=$(hook '{"hook_event_name":"PostToolUse","session_id":"h1","tool_name":"Agent","tool_input":{"prompt":"x"}}')
-expect "nudge after a background Agent" "$out" "subagent-status.sh --wait 300"
+expect "nudge after a background Agent" "$out" "subagent-status.sh --wait 600"
 path=$(grep -oE 'bash [^ `]*subagent-status\.sh' <<<"$out" | head -1 | cut -d' ' -f2)
 [ -f "${path/#\~/$HOME}" ] || [ -f "$path" ] && ok "nudge points at the real script ($path)" || bad "nudge script path" "$path"
 out=$(hook '{"hook_event_name":"PostToolUse","session_id":"h1","tool_name":"Workflow","tool_input":{}}')
-expect "nudge after a Workflow" "$out" "subagent-status.sh --wait 300"
+expect "nudge after a Workflow" "$out" "subagent-status.sh --wait 600"
 for c in '{"hook_event_name":"PostToolUse","session_id":"h1","tool_name":"Agent","tool_input":{"run_in_background":false}}' \
          '{"hook_event_name":"PostToolUse","session_id":"h1","agent_id":"a1","tool_name":"Workflow","tool_input":{}}' \
          '{"hook_event_name":"PostToolUse","session_id":"h1","tool_name":"mcp__t3-code__delegate_task","tool_input":{"mode":"sync"}}' \
