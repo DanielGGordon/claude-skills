@@ -86,6 +86,31 @@ runs at here (since 2026-10-07; the notes give per-effort numbers).
   The Gemini 3.1 Pro ignore row's reason now names Argon as its successor.
   Live routecheck 2026-10-14: **ALL ROUTES OK**, all three Argon ids included
   (cursor-agent 2026.10.14-0f9edde, a new build with no changelog entry yet).
+- **2026-10-15 scout** (grok x-recency `x_search=14` + Claude WebFetch; catalogs
+  unchanged, no drift, no unrouted ids): no route or score change. The
+  gemini-4-argon note now records that Cursor bills it outside plan usage
+  (cursor.com model page, fetched 2026-10-15). GPT-5.5 left Codex for
+  ChatGPT sign-in 2026-10-14 (learn.chatgpt.com/docs/models; already retired
+  here → gpt-6.1-sol). Still not released: gpt-6.1-luna, grok-4.8.
+- **2026-10-16 scout** (grok x-recency `x_search=10` + Claude WebSearch/WebFetch;
+  Cursor listed `muse-wonder-1.0-{minimal,low,medium,high,xhigh,max}` as
+  unrouted, absent on the 2026-10-15 run): **Meta Muse Wonder 1.0 ignored**
+  (`cursor:muse-wonder-1.0-*`).
+  AA Intelligence Index v4.3.2 **52 (max) at $4.52 per index task**, 54k
+  output tokens per task, AA-Omniscience Index 25 (AA model page + muse-wonder-
+  vs-gemini-4-argon comparison page, fetched 2026-10-16), hallucination
+  **27%** (max; AA article 2026-10-12). Gemini 4 Argon (high) beats it at the
+  same index version: 53 at $1.99 per task, AA-Omniscience Index 42,
+  hallucination 15%, Terminal-Bench 4.0 57% vs 52%. Its one lead is
+  GDPval-AA v2.1
+  (max: 1770 vs Argon high 1624 / Astra max 1573 — the two AA comparison
+  pages, fetched 2026-10-16), and knowledge work runs natively on
+  opus/fable here. Cursor bills it outside plan usage ("a third-party model,
+  so it isn't part of the usage included with Cursor plans" —
+  cursor.com/docs/models/muse-wonder, undated), at $4 / $0.20 cached / $20
+  per Mtok (cursor.com/docs/models, fetched 2026-10-16). Cursor's default
+  context is 300k, or 1M in Max Mode. AA publishes only the max effort.
+  Still not released: gpt-6.1-luna, grok-4.8.
 - Earlier: Scores are **1–10, higher is better**. Last validated **2026-07-21** against
 Artificial Analysis, Coding Agent Index, LMArena/Design Arena, and vendor pricing
 (two independent research passes: Claude web research + grok-4.5 recent-intel);
@@ -191,8 +216,13 @@ default (`medium`/`high`), so treat the scores as ceilings.
     price**, rising to **$3.98** after 2026-11-30 (AA article) — level with
     gpt-5.6-sol (CE 7) now and above Astra's $3.26 (CE 6) after the promo, so
     re-score it on 2026-12-01. It is verbose: **62k output tokens per index
-    task vs Astra's 27k** (comparison page). Cursor bills it at the same
-    $2/$10 (@cursor_ai, 2026-10-13, via grok; cursor.com's model page printed no rate).
+    task vs Astra's 27k** (comparison page). Cursor bills it **outside plan
+    usage**: "a third-party model, so it isn't part of the usage included
+    with Cursor plans" (prepaid credit, or the "Other Models" pool on legacy
+    plans — cursor.com/docs/models/gemini-4-argon, undated, fetched
+    2026-10-15), so every `second-review` call is metered. Rate: $2/$10
+    (@cursor_ai, 2026-10-13, via grok; the page still printed no rate table
+    on 2026-10-15).
   - **Reliability 6\*** — AA-Omniscience **hallucination 15%, accuracy 50%,
     Index 42 (high)**: "the lowest of any model scoring 45+ on the
     Intelligence Index" (AA article 2026-09-30; AA's 2026-10-13 GA post
@@ -209,7 +239,10 @@ default (`medium`/`high`), so treat the scores as ceilings.
     (@cursor_ai 2026-10-13, via grok; version unpublished); Google's own
     DeepSWE v1.1 77.9% / AutomationBench 51.3% (blog.google 2026-09-30, vendor
     table not fetched as data); practitioner reports of wrong codebase
-    conclusions and broken 3D topology (X, 2026-10-14).
+    conclusions and broken 3D topology (X, 2026-10-14); a code-audit test with
+    24 false findings out of 36 (@ainotesus 2026-10-14, via grok, single
+    writeup) — if it holds, it bears on `second-review`, so judge its
+    findings; AA-Robotics v0.1 55 (@ArtificialAnlys 2026-10-14, via grok).
 
 - **gpt-6-astra** (OpenAI GPT-6 "Astra", GA 2026-09-03; the only GPT-6 tier
   until Sol and Luna joined it on 2026-09-22 — still no Terra/mini/nano) — $10/$50 per Mtok, cached input $1,
